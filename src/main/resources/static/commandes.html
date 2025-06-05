@@ -1,10 +1,290 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
+
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gestion des Commandes</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
-<body>
-$END$
+
+<body class="bg-light">
+<div class="container py-5">
+    <h1 class="mb-4 text-center">📦 Gestion des Commandes</h1>
+
+    <!-- Section : Création d’une nouvelle commande -->
+    <div class="card mb-5 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Nouvelle Commande</h2>
+        </div>
+        <div class="card-body">
+            <form id="commandeForm" novalidate>
+                <div class="mb-3">
+                    <label for="nomClient" class="form-label">Nom du client</label>
+                    <input type="text" class="form-control" id="nomClient" name="nomClient" required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="dateCommande" class="form-label">Date de commande</label>
+                    <input type="date" class="form-control" id="dateCommande" name="dateCommande" required />
+                </div>
+
+                <div id="lignesContainer" class="mb-3">
+                    <label class="form-label">Lignes de commande</label>
+                    <!-- Lignes ajoutées dynamiquement ici -->
+                </div>
+
+                <button type="button" class="btn btn-outline-secondary mb-3" onclick="ajouterLigne()">
+                    + Ajouter une ligne
+                </button>
+                <br />
+
+                <button type="submit" class="btn btn-success">Créer la commande</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section : Liste des commandes par date -->
+    <div class="card mb-5 shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h2 class="h5 mb-0">Commandes par date</h2>
+        </div>
+        <div class="card-body">
+            <div class="row g-2 mb-3">
+                <div class="col-md-8">
+                    <label for="filtreDate" class="form-label">Sélectionner une date</label>
+                    <input type="date" class="form-control" id="filtreDate" name="filtreDate" />
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="chargerCommandes()">Charger les commandes</button>
+                </div>
+            </div>
+
+            <ul class="list-group" id="commandeListe"></ul>
+        </div>
+    </div>
+
+    <!-- Section : Rapport du jour -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h2 class="h5 mb-0">📊 Rapport du jour</h2>
+        </div>
+        <div class="card-body">
+            <div class="row g-2 mb-3">
+                <div class="col-md-8">
+                    <label for="rapportDate" class="form-label">Sélectionner une date</label>
+                    <input type="date" class="form-control" id="rapportDate" name="rapportDate" />
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-outline-dark w-100" onclick="chargerRapport()">Afficher le rapport</button>
+                </div>
+            </div>
+
+            <div id="rapportResultat"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS + Popper (optionnel) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Initialisation des champs date aux valeurs du jour
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("filtreDate").value = today;
+    document.getElementById("rapportDate").value = today;
+    document.getElementById("dateCommande").value = today;
+
+    // Gestion de la soumission du formulaire de création de commande
+    document.getElementById("commandeForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      // Récupération des valeurs du formulaire
+      const nomClient = document.getElementById("nomClient").value.trim();
+      const dateCommande = document.getElementById("dateCommande").value;
+      const lignes = [];
+
+      // Construire le tableau des lignes
+      document.querySelectorAll(".ligneCommande").forEach(div => {
+        const produitId = div.querySelector(".produitId").value;
+        const quantite = div.querySelector(".quantite").value;
+        lignes.push({ produitId: parseInt(produitId, 10), quantite: parseInt(quantite, 10) });
+      });
+
+      // Vérification : au moins une ligne de commande
+      if (lignes.length === 0) {
+        alert("Veuillez ajouter au moins une ligne de commande.");
+        return;
+      }
+
+      // Préparation du payload JSON
+      const payload = {
+        nomClient: nomClient,
+        dateCommande: dateCommande,
+        lignes: lignes
+      };
+
+      try {
+        const response = await fetch("/api/commandes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          alert("✅ Commande créée avec succès !");
+          // Réinitialisation du formulaire
+          this.reset();
+          // Vider le conteneur des lignes
+          document.getElementById("lignesContainer").innerHTML = "";
+          // Réinitialiser la date au jour courant
+          document.getElementById("dateCommande").value = today;
+        } else {
+          const errorText = await response.text();
+          alert("❌ Erreur lors de la création : " + errorText);
+        }
+      } catch (err) {
+        alert("❌ Erreur réseau : " + err.message);
+      }
+    });
+
+    // Ajout dynamique d'une ligne de commande
+    function ajouterLigne() {
+      const container = document.getElementById("lignesContainer");
+
+      const ligne = document.createElement("div");
+      ligne.className = "ligneCommande d-flex gap-2 mb-2";
+
+      // Élément HTML pour la ligne
+      ligne.innerHTML = `
+        <input type="number" class="form-control produitId" placeholder="ID Produit" min="1" required />
+        <input type="number" class="form-control quantite" placeholder="Quantité" min="1" required />
+        <button type="button" class="btn btn-danger" onclick="this.parentNode.remove()">🗑 Supprimer</button>
+      `;
+
+      container.appendChild(ligne);
+    }
+
+    // Charger les commandes pour la date sélectionnée
+    async function chargerCommandes() {
+      const dateFiltre = document.getElementById("filtreDate").value || today;
+      try {
+        const response = await fetch(`/api/commandes?date=${dateFiltre}`);
+        if (!response.ok) {
+          const errText = await response.text();
+          alert("❌ Erreur lors du chargement : " + errText);
+          return;
+        }
+        const commandes = await response.json();
+
+        const liste = document.getElementById("commandeListe");
+        liste.innerHTML = ""; // Vider la liste actuelle
+
+        if (commandes.length === 0) {
+          const aucun = document.createElement("li");
+          aucun.className = "list-group-item text-center text-muted";
+          aucun.textContent = "Aucune commande trouvée pour cette date.";
+          liste.appendChild(aucun);
+          return;
+        }
+
+        commandes.forEach(c => {
+          const item = document.createElement("li");
+          item.className = "list-group-item d-flex justify-content-between align-items-center";
+
+          // Texte : Nom du client - Date - Nombre de lignes
+          const texteInfo = document.createElement("div");
+          texteInfo.innerHTML = `
+            <strong>${c.nomClient}</strong> — <small>${c.dateCommande}</small>
+            <span class="badge bg-secondary ms-2">${c.lignes.length} ligne(s)</span>
+          `;
+
+          // Bouton pour afficher la facture
+          const btnFacture = document.createElement("button");
+          btnFacture.className = "btn btn-sm btn-outline-secondary";
+          btnFacture.textContent = "🧾 Facture";
+          btnFacture.onclick = () => afficherFacture(c.id);
+
+          item.appendChild(texteInfo);
+          item.appendChild(btnFacture);
+          liste.appendChild(item);
+        });
+      } catch (err) {
+        alert("❌ Erreur réseau lors du chargement des commandes : " + err.message);
+      }
+    }
+
+    // Afficher la facture pour une commande donnée
+    async function afficherFacture(id) {
+      try {
+        const response = await fetch(`/api/commandes/${id}/facture`);
+        if (!response.ok) {
+          const errMsg = await response.text();
+          alert("❌ Erreur lors de la génération de la facture : " + errMsg);
+          return;
+        }
+        const factureTexte = await response.text();
+        // Affichage dans une nouvelle fenêtre / onglet pour garder la mise en forme éventuelle
+        const w = window.open("", "_blank");
+        w.document.write(`<pre style="white-space: pre-wrap; font-family: monospace;">${factureTexte}</pre>`);
+        w.document.title = "Facture Commande #" + id;
+      } catch (err) {
+        alert("❌ Erreur réseau lors de la récupération de la facture : " + err.message);
+      }
+    }
+
+    // Charger et afficher le rapport du jour pour la date sélectionnée
+    async function chargerRapport() {
+      const dateRapport = document.getElementById("rapportDate").value || today;
+      try {
+        const response = await fetch(`/api/commandes/rapport?date=${dateRapport}`);
+        if (!response.ok) {
+          const errMsg = await response.text();
+          alert("❌ Erreur lors du chargement du rapport : " + errMsg);
+          return;
+        }
+        const data = await response.json();
+
+        // Vérification des clés attendues
+        const { nombreCommandes, chiffreAffaires, topProduits } = data;
+
+        // Construction du HTML du rapport
+        let htmlRapport = `
+          <ul class="list-group mb-0">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              🧾 Nombre de commandes :
+              <span class="badge bg-primary">${nombreCommandes}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              💰 Chiffre d’affaires :
+              <span class="badge bg-success">${chiffreAffaires} FCFA</span>
+            </li>
+            <li class="list-group-item">
+              🥇 Top 5 produits :
+              <ul class="mt-2 mb-0">
+        `;
+
+        if (Array.isArray(topProduits) && topProduits.length > 0) {
+          topProduits.forEach(p => {
+            htmlRapport += `<li>${p}</li>`;
+          });
+        } else {
+          htmlRapport += `<li class="text-muted">Aucun produit disponible</li>`;
+        }
+
+        htmlRapport += `
+              </ul>
+            </li>
+          </ul>
+        `;
+
+        document.getElementById("rapportResultat").innerHTML = htmlRapport;
+      } catch (err) {
+        alert("❌ Erreur réseau lors de la récupération du rapport : " + err.message);
+      }
+    }
+</script>
 </body>
+
 </html>

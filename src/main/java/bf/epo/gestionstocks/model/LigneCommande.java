@@ -1,5 +1,6 @@
 package bf.epo.gestionstocks.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,7 @@ public class LigneCommande {
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id", nullable = false)
+    @JsonBackReference  // <-- Gère la sérialisation côté "enfant"
     private Commande commande;
 
     // Association ManyToOne vers Produit

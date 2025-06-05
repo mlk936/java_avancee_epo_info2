@@ -8,10 +8,11 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
         th { background-color: #f4f4f4; }
-        h1 { text-align: center; }
+        h1, h2 { text-align: center; }
         form { margin-top: 40px; display: flex; gap: 10px; flex-wrap: wrap; }
         input { padding: 5px; flex: 1 0 20%; }
         button { padding: 6px 12px; }
+        #modifForm { display: none; background-color: #f9f9f9; padding: 15px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
@@ -26,7 +27,7 @@
         <th>Prix</th>
         <th>Stock</th>
         <th>Seuil</th>
-        <th>Action</th>
+        <th>Actions</th>
     </tr>
     </thead>
     <tbody></tbody>
@@ -42,9 +43,21 @@
     <button type="submit">Ajouter</button>
 </form>
 
+<h2>Modifier un produit</h2>
+<form id="modifForm">
+    <input type="hidden" name="id">
+    <input type="text" name="nom" placeholder="Nom" required>
+    <input type="text" name="categorie" placeholder="Catégorie" required>
+    <input type="number" name="prixUnitaire" placeholder="Prix unitaire" required>
+    <input type="number" name="quantiteStock" placeholder="Quantité en stock" required>
+    <input type="number" name="seuilReapprovisionnement" placeholder="Seuil de réapprovisionnement" required>
+    <button type="submit">Modifier</button>
+</form>
+
 <script>
     const tbody = document.querySelector('#produitsTable tbody');
-    const form = document.getElementById('ajoutForm');
+    const formAjout = document.getElementById('ajoutForm');
+    const formModif = document.getElementById('modifForm');
 
     // Charger les produits
     function chargerProduits() {
@@ -61,7 +74,10 @@
                         <td>${p.prixUnitaire}</td>
                         <td>${p.quantiteStock}</td>
                         <td>${p.seuilReapprovisionnement}</td>
-                        <td><button onclick="supprimerProduit(${p.id})">Supprimer</button></td>
+                        <td>
+                            <button onclick="remplirFormulaireModification(${p.id})">Modifier</button>
+                            <button onclick="supprimerProduit(${p.id})">Supprimer</button>
+                        </td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -69,9 +85,9 @@
     }
 
     // Ajouter un produit
-    form.addEventListener('submit', function(e) {
+    formAjout.addEventListener('submit', function(e) {
         e.preventDefault();
-        const formData = new FormData(form);
+        const formData = new FormData(formAjout);
         const data = Object.fromEntries(formData.entries());
         data.prixUnitaire = parseFloat(data.prixUnitaire);
         data.quantiteStock = parseInt(data.quantiteStock);
@@ -87,7 +103,7 @@
             return res.json();
         })
         .then(() => {
-            form.reset();
+            formAjout.reset();
             chargerProduits();
         })
         .catch(err => alert(err));
@@ -105,6 +121,51 @@
                 }
             });
     }
+
+    // Remplir formulaire de modification
+    function remplirFormulaireModification(id) {
+        fetch(`/api/produits/${id}`)
+            .then(res => res.json())
+            .then(p => {
+                formModif.id.value = p.id;
+                formModif.nom.value = p.nom;
+                formModif.categorie.value = p.categorie;
+                formModif.prixUnitaire.value = p.prixUnitaire;
+                formModif.quantiteStock.value = p.quantiteStock;
+                formModif.seuilReapprovisionnement.value = p.seuilReapprovisionnement;
+                formModif.style.display = 'flex';
+                window.scrollTo({ top: formModif.offsetTop, behavior: 'smooth' });
+            });
+    }
+
+    // Modifier un produit
+    formModif.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = formModif.id.value;
+        const data = {
+            nom: formModif.nom.value,
+            categorie: formModif.categorie.value,
+            prixUnitaire: parseFloat(formModif.prixUnitaire.value),
+            quantiteStock: parseInt(formModif.quantiteStock.value),
+            seuilReapprovisionnement: parseInt(formModif.seuilReapprovisionnement.value)
+        };
+
+        fetch(`/api/produits/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Erreur lors de la modification');
+            return res.json();
+        })
+        .then(() => {
+            formModif.reset();
+            formModif.style.display = 'none';
+            chargerProduits();
+        })
+        .catch(err => alert(err));
+    });
 
     // Initialisation
     chargerProduits();

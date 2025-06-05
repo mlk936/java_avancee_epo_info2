@@ -1,5 +1,6 @@
 package bf.epo.gestionstocks.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.Id;
@@ -34,6 +35,7 @@ public class Commande {
     private LocalDate dateCommande;
 
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference  // <-- évite boucle infinie JSON
     private List<LigneCommande> lignes = new ArrayList<>();
 
     // Constructeurs
