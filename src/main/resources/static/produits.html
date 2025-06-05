@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des Produits</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        h1 { text-align: center; }
+        form { margin-top: 40px; display: flex; gap: 10px; flex-wrap: wrap; }
+        input { padding: 5px; flex: 1 0 20%; }
+        button { padding: 6px 12px; }
+    </style>
+</head>
+<body>
+<h1>Liste des Produits</h1>
+
+<table id="produitsTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Catégorie</th>
+        <th>Prix</th>
+        <th>Stock</th>
+        <th>Seuil</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<h2>Ajouter un produit</h2>
+<form id="ajoutForm">
+    <input type="text" name="nom" placeholder="Nom" required>
+    <input type="text" name="categorie" placeholder="Catégorie" required>
+    <input type="number" name="prixUnitaire" placeholder="Prix unitaire" required>
+    <input type="number" name="quantiteStock" placeholder="Quantité en stock" required>
+    <input type="number" name="seuilReapprovisionnement" placeholder="Seuil de réapprovisionnement" required>
+    <button type="submit">Ajouter</button>
+</form>
+
+<script>
+    const tbody = document.querySelector('#produitsTable tbody');
+    const form = document.getElementById('ajoutForm');
+
+    // Charger les produits
+    function chargerProduits() {
+        fetch('/api/produits')
+            .then(res => res.json())
+            .then(produits => {
+                tbody.innerHTML = '';
+                produits.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${p.id}</td>
+                        <td>${p.nom}</td>
+                        <td>${p.categorie}</td>
+                        <td>${p.prixUnitaire}</td>
+                        <td>${p.quantiteStock}</td>
+                        <td>${p.seuilReapprovisionnement}</td>
+                        <td><button onclick="supprimerProduit(${p.id})">Supprimer</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            });
+    }
+
+    // Ajouter un produit
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        data.prixUnitaire = parseFloat(data.prixUnitaire);
+        data.quantiteStock = parseInt(data.quantiteStock);
+        data.seuilReapprovisionnement = parseInt(data.seuilReapprovisionnement);
+
+        fetch('/api/produits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Erreur lors de l\'ajout');
+            return res.json();
+        })
+        .then(() => {
+            form.reset();
+            chargerProduits();
+        })
+        .catch(err => alert(err));
+    });
+
+    // Supprimer un produit
+    function supprimerProduit(id) {
+        if (!confirm('Confirmer la suppression ?')) return;
+        fetch(`/api/produits/${id}`, { method: 'DELETE' })
+            .then(res => {
+                if (res.status === 204) {
+                    chargerProduits();
+                } else {
+                    alert('Erreur lors de la suppression');
+                }
+            });
+    }
+
+    // Initialisation
+    chargerProduits();
+</script>
+</body>
+</html>

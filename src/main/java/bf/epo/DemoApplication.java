@@ -1,4 +1,4 @@
-package com.example.demo;
+package bf.epo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
