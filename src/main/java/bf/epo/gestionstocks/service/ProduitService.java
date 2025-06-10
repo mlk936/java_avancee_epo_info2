@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProduitService {
@@ -20,6 +21,18 @@ public class ProduitService {
     public List<Produit> listerProduits() {
         return produitRepository.findAll();
     }
+
+
+    // Dans ProduitService.java
+
+    public List<Produit> getProduitsVedettes() {
+        return produitRepository.findTop4ByOrderByVentesDesc();
+    }
+
+    public List<Produit> getNouveauxProduits() {
+        return produitRepository.findTop4ByOrderByDateAjoutDesc();
+    }
+
 
     // Ajouter (ou modifier) un produit
     public Produit sauvegarderProduit(Produit produit) {
@@ -46,4 +59,12 @@ public class ProduitService {
                         .orElse(10)
         );
     }
+
+    public List<Produit> getProduitsStockCritique() {
+        return produitRepository.findAll()
+                .stream()
+                .filter(p -> p.getQuantiteStock() <= p.getSeuilReapprovisionnement())
+                .collect(Collectors.toList());
+    }
+
 }

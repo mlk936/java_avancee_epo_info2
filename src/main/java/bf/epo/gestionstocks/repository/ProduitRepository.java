@@ -10,4 +10,8 @@ import java.util.List;
 public interface ProduitRepository extends JpaRepository<Produit, Long> {
     // Méthode dérivée pour lister les produits dont le stock ≤ seuil
     List<Produit> findByQuantiteStockLessThanEqual(Integer seuilReapprovisionnement);
+
+    List<Produit> findTop4ByOrderByVentesDesc();
+    List<Produit> findTop4ByOrderByDateAjoutDesc();
+
 }

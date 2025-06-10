@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Catalogue Produits</title>
+    <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          margin: 20px;
+          background: #f5f5f5;
+        }
+
+        h1 {
+          text-align: center;
+          margin-bottom: 30px;
+          color: #222;
+        }
+
+        #produitsContainer {
+          display: grid;
+          grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+          gap: 20px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .card {
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          cursor: pointer;
+        }
+        .card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 8px 20px rgb(0 0 0 / 0.15);
+        }
+
+        .card img {
+          width: 100%;
+          height: 160px;
+          object-fit: cover;
+          background: #eee;
+        }
+
+        .card-content {
+          padding: 15px;
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .card-title {
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 6px;
+          color: #333;
+          flex-grow: 1;
+        }
+
+        .card-category {
+          font-size: 0.9rem;
+          color: #777;
+          margin-bottom: 10px;
+          text-transform: capitalize;
+        }
+
+        .card-price {
+          font-size: 1rem;
+          color: #d9534f;
+          font-weight: 700;
+          margin-bottom: 10px;
+        }
+
+        .card-stock {
+          font-size: 0.9rem;
+          color: #555;
+        }
+
+        .stock-low {
+          color: #d9534f;
+          font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Nos Produits</h1>
+
+<div id="produitsContainer"></div>
+
+<script>
+    async function chargerProduits() {
+      try {
+        const response = await fetch('/api/produits');
+        if (!response.ok) throw new Error('Erreur chargement produits');
+        const produits = await response.json();
+
+        const container = document.getElementById('produitsContainer');
+        container.innerHTML = '';
+
+        produits.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          const imageSrc = p.imageUrl && p.imageUrl.trim() !== '' ? p.imageUrl : '/images/produits/default.png';
+
+          card.innerHTML = `
+            <img src="${imageSrc}" alt="Image de ${p.nom}" />
+            <div class="card-content">
+              <div class="card-title">${p.nom}</div>
+              <div class="card-category">${p.categorie}</div>
+              <div class="card-price">${p.prixUnitaire.toFixed(2)} FCFA</div>
+              <div class="card-stock ${p.quantiteStock <= p.seuilReapprovisionnement ? 'stock-low' : ''}">
+                Stock: ${p.quantiteStock}
+              </div>
+            </div>
+          `;
+
+          container.appendChild(card);
+        });
+      } catch (e) {
+        console.error(e);
+        document.getElementById('produitsContainer').innerHTML = '<p>Impossible de charger les produits.</p>';
+      }
+    }
+
+    // Chargement initial
+    chargerProduits();
+</script>
+
+</body>
+</html>

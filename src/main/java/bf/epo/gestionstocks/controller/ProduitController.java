@@ -20,6 +20,16 @@ public class ProduitController {
         this.produitService = produitService;
     }
 
+
+
+    // 6. Alerte stock critique
+    @GetMapping("/stock-critique")
+    public ResponseEntity<List<Produit>> getProduitsStockCritique() {
+        List<Produit> produitsCritiques = produitService.getProduitsStockCritique();
+        return ResponseEntity.ok(produitsCritiques);
+    }
+
+
     // 1. Lister tous les produits
     @GetMapping
     public ResponseEntity<List<Produit>> getAllProduits() {

@@ -1,15 +1,11 @@
 package bf.epo.gestionstocks.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Column;
-
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.Date;
 
 @Entity
 @Table(name = "produit")
@@ -42,8 +38,19 @@ public class Produit {
     @Column(name = "seuil_reapprovisionnement", nullable = false)
     private Integer seuilReapprovisionnement = 10;
 
+    @Column(name = "ventes")
+    private Integer ventes = 0;
+
+    @Column(name = "date_ajout")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date dateAjout = new Date();
+
+    @Column(name = "image_url")
+    private String imageUrl = "/images/produits/default.png";
+
     // Constructeurs
-    public Produit() { }
+    public Produit() {
+    }
 
     public Produit(String nom, String categorie, Double prixUnitaire, Integer quantiteStock, Integer seuilReapprovisionnement) {
         this.nom = nom;
@@ -53,7 +60,16 @@ public class Produit {
         this.seuilReapprovisionnement = seuilReapprovisionnement;
     }
 
-    // Getters / Setters
+    public Produit(String nom, String categorie, Double prixUnitaire, Integer quantiteStock, Integer seuilReapprovisionnement, String imageUrl) {
+        this.nom = nom;
+        this.categorie = categorie;
+        this.prixUnitaire = prixUnitaire;
+        this.quantiteStock = quantiteStock;
+        this.seuilReapprovisionnement = seuilReapprovisionnement;
+        this.imageUrl = imageUrl;
+    }
+
+    // Getters & Setters
 
     public Long getId() {
         return id;
@@ -62,6 +78,7 @@ public class Produit {
     public String getNom() {
         return nom;
     }
+
     public void setNom(String nom) {
         this.nom = nom;
     }
@@ -69,6 +86,7 @@ public class Produit {
     public String getCategorie() {
         return categorie;
     }
+
     public void setCategorie(String categorie) {
         this.categorie = categorie;
     }
@@ -76,6 +94,7 @@ public class Produit {
     public Double getPrixUnitaire() {
         return prixUnitaire;
     }
+
     public void setPrixUnitaire(Double prixUnitaire) {
         this.prixUnitaire = prixUnitaire;
     }
@@ -83,6 +102,7 @@ public class Produit {
     public Integer getQuantiteStock() {
         return quantiteStock;
     }
+
     public void setQuantiteStock(Integer quantiteStock) {
         this.quantiteStock = quantiteStock;
     }
@@ -90,13 +110,40 @@ public class Produit {
     public Integer getSeuilReapprovisionnement() {
         return seuilReapprovisionnement;
     }
+
     public void setSeuilReapprovisionnement(Integer seuilReapprovisionnement) {
         this.seuilReapprovisionnement = seuilReapprovisionnement;
     }
 
+    public Integer getVentes() {
+        return ventes;
+    }
+
+    public void setVentes(Integer ventes) {
+        this.ventes = ventes;
+    }
+
+    public Date getDateAjout() {
+        return dateAjout;
+    }
+
+    public void setDateAjout(Date dateAjout) {
+        this.dateAjout = dateAjout;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
     @Override
     public String toString() {
-        return String.format("Produit{id=%d, nom='%s', categorie='%s', prix=%.2f, stock=%d, seuil=%d}",
-                id, nom, categorie, prixUnitaire, quantiteStock, seuilReapprovisionnement);
+        return String.format(
+                "Produit{id=%d, nom='%s', categorie='%s', prix=%.2f, stock=%d, seuil=%d, ventes=%d}",
+                id, nom, categorie, prixUnitaire, quantiteStock, seuilReapprovisionnement, ventes
+        );
     }
 }
