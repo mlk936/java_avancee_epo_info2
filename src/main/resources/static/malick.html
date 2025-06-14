@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gestion des produits</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f6f9;
+      color: #212529;
+    }
+
+    h1 {
+      text-align: center;
+      color: #343a40;
+      margin-bottom: 30px;
+    }
+
+    form {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    form div {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    input[type="file"] {
+      padding: 6px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .form-actions button {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #submitBtn {
+      background-color: #28a745;
+      color: white;
+    }
+
+    #submitBtn:hover {
+      background-color: #218838;
+    }
+
+    #btnAnnuler {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    #btnAnnuler:hover {
+      background-color: #5a6268;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 40px;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: center;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    th {
+      background-color: #343a40;
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f1f3f5;
+    }
+
+    img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 6px 10px;
+      margin: 2px;
+      border-radius: 4px;
+      border: none;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    td button:first-child {
+      background-color: #007bff;
+      color: white;
+    }
+
+    td button:first-child:hover {
+      background-color: #0069d9;
+    }
+
+    td button:last-child {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    td button:last-child:hover {
+      background-color: #c82333;
+    }
+
+    @media (max-width: 768px) {
+      form, table {
+        width: 100%;
+        font-size: 14px;
+      }
+
+      label, input, button {
+        font-size: 14px;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 10px;
+      }
+
+      td {
+        text-align: left;
+        position: relative;
+        padding-left: 50%;
+      }
+
+      td:before {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        font-weight: bold;
+        white-space: nowrap;
+      }
+
+      td:nth-child(1):before { content: "ID"; }
+      td:nth-child(2):before { content: "Image"; }
+      td:nth-child(3):before { content: "Nom"; }
+      td:nth-child(4):before { content: "Catégorie"; }
+      td:nth-child(5):before { content: "Prix Unitaire"; }
+      td:nth-child(6):before { content: "Stock"; }
+      td:nth-child(7):before { content: "Seuil"; }
+      td:nth-child(8):before { content: "Actions"; }
+    }
+  </style>
+
+</head>
+<body>
+
+<h1>Gestion des produits</h1>
+
+<form id="produitForm" enctype="multipart/form-data">
+  <input type="hidden" id="produitId" name="produitId" />
+  <div>
+    <label for="nom">Nom *</label>
+    <input type="text" id="nom" name="nom" required />
+  </div>
+  <div>
+    <label for="categorie">Catégorie *</label>
+    <input type="text" id="categorie" name="categorie" required />
+  </div>
+  <div>
+    <label for="prixUnitaire">Prix unitaire *</label>
+    <input type="number" id="prixUnitaire" name="prixUnitaire" step="0.01" min="0" required />
+  </div>
+  <div>
+    <label for="quantiteStock">Quantité en stock *</label>
+    <input type="number" id="quantiteStock" name="quantiteStock" min="0" required />
+  </div>
+  <div>
+    <label for="seuilReapprovisionnement">Seuil de réapprovisionnement *</label>
+    <input type="number" id="seuilReapprovisionnement" name="seuilReapprovisionnement" min="0" required />
+  </div>
+  <div>
+    <label for="imageFile">Image du produit *</label>
+    <input type="file" id="imageFile" name="imageFile" accept="image/*" required />
+  </div>
+  <div class="form-actions">
+    <button type="submit" id="submitBtn">Enregistrer</button>
+    <button type="button" id="btnAnnuler" style="display:none;">Annuler</button>
+  </div>
+</form>
+
+<table>
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Image</th>
+    <th>Nom</th>
+    <th>Catégorie</th>
+    <th>Prix Unitaire</th>
+    <th>Stock</th>
+    <th>Seuil</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody id="produitsTableBody"></tbody>
+</table>
+
+<script>
+  const apiUrl = 'http://localhost:8080/api/produits';
+
+  async function chargerProduits() {
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error("Erreur lors du chargement des produits.");
+      const produits = await response.json();
+      const tbody = document.getElementById('produitsTableBody');
+      tbody.innerHTML = '';
+      produits.forEach(p => {
+  const isStockBas = p.quantiteStock <= p.seuilReapprovisionnement;
+  tbody.innerHTML += `
+    <tr style="background-color: ${isStockBas ? '#f8d7da' : 'transparent'};">
+      <td>${p.id}</td>
+      <td><img src="${p.imageUrl || 'images/default.png'}" alt="Image" /></td>
+      <td>${p.nom}</td>
+      <td>${p.categorie}</td>
+      <td>${p.prixUnitaire.toFixed(2)} €</td>
+      <td>${p.quantiteStock}</td>
+      <td>${p.seuilReapprovisionnement}</td>
+      <td>
+        <button onclick="modifierProduit(${p.id})">Modifier</button>
+        <button onclick="supprimerProduit(${p.id})">Supprimer</button>
+      </td>
+    </tr>`;
+});
+
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function supprimerProduit(id) {
+    if (confirm("Supprimer ce produit ?")) {
+      const response = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        chargerProduits();
+      } else {
+        alert("Erreur lors de la suppression.");
+      }
+    }
+  }
+
+  async function modifierProduit(id) {
+    try {
+      const response = await fetch(`${apiUrl}/${id}`);
+      if (!response.ok) throw new Error("Erreur lors du chargement du produit.");
+      const p = await response.json();
+      document.getElementById('produitId').value = p.id;
+      document.getElementById('nom').value = p.nom;
+      document.getElementById('categorie').value = p.categorie;
+      document.getElementById('prixUnitaire').value = p.prixUnitaire;
+      document.getElementById('quantiteStock').value = p.quantiteStock;
+      document.getElementById('seuilReapprovisionnement').value = p.seuilReapprovisionnement;
+      document.getElementById('imageFile').value = '';
+      document.getElementById('submitBtn').textContent = 'Modifier';
+      document.getElementById('btnAnnuler').style.display = 'inline-block';
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  document.getElementById('btnAnnuler').onclick = () => {
+    document.getElementById('produitForm').reset();
+    document.getElementById('produitId').value = '';
+    document.getElementById('submitBtn').textContent = 'Enregistrer';
+    document.getElementById('btnAnnuler').style.display = 'none';
+  };
+
+  document.getElementById('produitForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('produitId').value;
+    const form = document.getElementById('produitForm');
+    const formData = new FormData(form);
+
+    const url = id ? `${apiUrl}/${id}` : apiUrl;
+    const method = id ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Erreur lors de l'enregistrement.");
+
+      form.reset();
+      document.getElementById('produitId').value = '';
+      document.getElementById('submitBtn').textContent = 'Enregistrer';
+      document.getElementById('btnAnnuler').style.display = 'none';
+      chargerProduits();
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  // Lancement initial
+  chargerProduits();
+</script>
+
+</body>
+</html>

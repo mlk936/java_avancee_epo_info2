@@ -1,6 +1,5 @@
 package bf.epo.gestionstocks.service;
 
-
 import bf.epo.gestionstocks.dto.CommandeRequest;
 import bf.epo.gestionstocks.dto.LigneCommandeRequest;
 import bf.epo.gestionstocks.exception.ResourceNotFoundException;
@@ -34,18 +33,16 @@ public class CommandeService {
     }
 
     /**
-     * Crée une commande à partir d’une CommandeRequest (DTO),
-     * vérifie le stock et ajuste automatiquement les quantités.
-     * Tout est dans une transaction : soit tout est validé, soit tout rollback.
+     * Crée une commande à partir d’une CommandeRequest,
+     * vérifie le stock et ajuste les quantités.
      */
     @Transactional
     public Commande creerCommande(CommandeRequest request) {
-        // 1. Créer l’entité Commande
         Commande commande = new Commande();
         commande.setNomClient(request.getNomClient());
         commande.setDateCommande(LocalDate.now());
 
-        // 2. Vérifier le stock pour chaque ligne demandée
+        // Vérification du stock
         for (LigneCommandeRequest lcReq : request.getLignes()) {
             Produit p = produitRepository.findById(lcReq.getProduitId())
                     .orElseThrow(() -> new ResourceNotFoundException(
@@ -57,10 +54,8 @@ public class CommandeService {
             }
         }
 
-        // 3. Sauvegarder la commande (sans lignes pour l’instant, cascade persistance)
         Commande savedCommande = commandeRepository.save(commande);
 
-        // 4. Pour chaque ligne, créer LigneCommande, l’attacher à la commande, mettre à jour le stock
         List<LigneCommande> lignesToSave = new ArrayList<>();
         for (LigneCommandeRequest lcReq : request.getLignes()) {
             Produit p = produitRepository.findById(lcReq.getProduitId()).get();
@@ -71,21 +66,17 @@ public class CommandeService {
             lc.setCommande(savedCommande);
             lignesToSave.add(lc);
 
-            // Mise à jour du stock du produit
             p.setQuantiteStock(p.getQuantiteStock() - lcReq.getQuantite());
             produitRepository.save(p);
         }
 
         ligneCommandeRepository.saveAll(lignesToSave);
-
-        // 5. Retourner la commande avec ses lignes
         savedCommande.setLignes(lignesToSave);
         return savedCommande;
     }
 
     /**
-     * Génère une facture texte pour une commande existante. 
-     * Retourne le contenu de la facture (String) : peut être stocké en .txt par le contrôleur.
+     * Génère une facture texte pour une commande.
      */
     public String genererFacture(Long commandeId) {
         Commande commande = commandeRepository.findById(commandeId)
@@ -119,46 +110,57 @@ public class CommandeService {
     }
 
     /**
-     * Récupère la liste des commandes pour une date donnée (exemple : aujourd’hui).
+     * Récupère la liste des commandes pour une date donnée.
      */
     public List<Commande> getCommandesParDate(LocalDate date) {
         return commandeRepository.findByDateCommande(date);
     }
 
     /**
-     * Pour le rapport du jour : nombre de commandes, chiffre d’affaires, top 5 produits vendus.
-     * Retourne une map contenant :
-     *  - "nbCommandes" -> Integer
-     *  - "chiffreAffaires" -> Double
-     *  - "topProduits" -> List<Map.Entry<Produit, Integer>> (produit + quantité vendue)
+     * Génère un rapport du jour : nombre de commandes, chiffre d'affaires, top 5 produits vendus.
      */
     public Map<String, Object> genererRapportDuJour(LocalDate date) {
-        List<Commande> commandes = getCommandesParDate(date);
-        int nbCommandes = commandes.size();
+        List<Commande> commandesDuJour = commandeRepository.findByDateCommande(date);
+        int nombreCommandes = commandesDuJour.size();
+        double chiffreAffaires = 0.0;
 
-        // Calcul du chiffre d’affaires total
-        double chiffreAffaires = commandes.stream()
-                .flatMap(c -> ligneCommandeRepository.findByCommandeId(c.getId()).stream())
-                .mapToDouble(lc -> lc.getQuantite() * lc.getPrixUnitaire())
-                .sum();
+        Map<Long, Integer> produitQuantites = new HashMap<>();
 
-        // Top 5 produits vendus (par somme des quantités)
-        Map<Produit, Integer> ventesMap = new HashMap<>();
-        for (Commande c : commandes) {
-            List<LigneCommande> lignes = ligneCommandeRepository.findByCommandeId(c.getId());
-            for (LigneCommande lc : lignes) {
-                ventesMap.merge(lc.getProduit(), lc.getQuantite(), Integer::sum);
+        for (Commande commande : commandesDuJour) {
+            List<LigneCommande> lignes = ligneCommandeRepository.findByCommandeId(commande.getId());
+            for (LigneCommande ligne : lignes) {
+                Long produitId = ligne.getProduit().getId();
+                int quantite = ligne.getQuantite();
+                chiffreAffaires += quantite * ligne.getPrixUnitaire();
+                produitQuantites.merge(produitId, quantite, Integer::sum);
             }
         }
-        List<Map.Entry<Produit, Integer>> topProduits = ventesMap.entrySet().stream()
-                .sorted(Map.Entry.<Produit, Integer>comparingByValue().reversed())
+
+        List<Map<String, Object>> topProduits = produitQuantites.entrySet().stream()
+                .sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue()))
                 .limit(5)
+                .map(entry -> {
+                    Long produitId = entry.getKey();
+                    int quantiteVendue = entry.getValue();
+                    Produit produit = produitRepository.findById(produitId).orElse(null);
+                    if (produit != null) {
+                        Map<String, Object> produitInfo = new HashMap<>();
+                        produitInfo.put("id", produit.getId());
+                        produitInfo.put("nom", produit.getNom());
+                        produitInfo.put("categorie", produit.getCategorie());
+                        produitInfo.put("quantite", quantiteVendue);
+                        return produitInfo;
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
         Map<String, Object> rapport = new HashMap<>();
-        rapport.put("nbCommandes", nbCommandes);
+        rapport.put("nombreCommandes", nombreCommandes);
         rapport.put("chiffreAffaires", chiffreAffaires);
         rapport.put("topProduits", topProduits);
+
         return rapport;
     }
 }

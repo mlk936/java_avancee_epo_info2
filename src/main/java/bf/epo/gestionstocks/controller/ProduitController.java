@@ -2,12 +2,10 @@ package bf.epo.gestionstocks.controller;
 
 import bf.epo.gestionstocks.model.Produit;
 import bf.epo.gestionstocks.service.ProduitService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -20,65 +18,69 @@ public class ProduitController {
         this.produitService = produitService;
     }
 
-
-
-    // 6. Alerte stock critique
-    @GetMapping("/stock-critique")
-    public ResponseEntity<List<Produit>> getProduitsStockCritique() {
-        List<Produit> produitsCritiques = produitService.getProduitsStockCritique();
-        return ResponseEntity.ok(produitsCritiques);
-    }
-
-
-    // 1. Lister tous les produits
+    // Lister tous les produits
     @GetMapping
-    public ResponseEntity<List<Produit>> getAllProduits() {
-        List<Produit> produits = produitService.listerProduits();
-        return ResponseEntity.ok(produits);
+    public List<Produit> getAllProduits() {
+        return produitService.listerProduits();
     }
 
-    // 2. Récupérer un produit par ID
+    // Obtenir un produit par ID
     @GetMapping("/{id}")
     public ResponseEntity<Produit> getProduitById(@PathVariable Long id) {
-        Produit p = produitService.getProduitParId(id);
-        if (p == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Produit non trouvé");
-        }
-        return ResponseEntity.ok(p);
+        Produit produit = produitService.getProduitParId(id);
+        return ResponseEntity.ok(produit);
     }
 
-    // 3. Ajouter un produit
-    @PostMapping
-    public ResponseEntity<Produit> createProduit(@Valid @RequestBody Produit produit) {
+    // Ajouter un nouveau produit avec image optionnelle
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<Produit> creerProduit(
+            @RequestParam String nom,
+            @RequestParam String categorie,
+            @RequestParam double prixUnitaire,
+            @RequestParam int quantiteStock,
+            @RequestParam int seuilReapprovisionnement,
+            @RequestParam(name = "imageFile", required = false) MultipartFile imageFile
+    ) {
+        Produit produit = new Produit();
+        produit.setNom(nom);
+        produit.setCategorie(categorie);
+        produit.setPrixUnitaire(prixUnitaire);
+        produit.setQuantiteStock(quantiteStock);
+        produit.setSeuilReapprovisionnement(seuilReapprovisionnement);
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = produitService.enregistrerImage(imageFile);
+            produit.setImageUrl(imageUrl);
+        } else {
+            produit.setImageUrl("/images/default.png"); // <-- ajout de l'image par défaut
+        }
+
         Produit saved = produitService.sauvegarderProduit(produit);
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+        return ResponseEntity.ok(saved);
     }
 
-    // 4. Modifier un produit
-    @PutMapping("/{id}")
-    public ResponseEntity<Produit> updateProduit(
+
+    // Modifier un produit existant avec image optionnelle
+    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    public ResponseEntity<Produit> updateProduitAvecImage(
             @PathVariable Long id,
-            @Valid @RequestBody Produit produitRequest) {
-        Produit existing = produitService.getProduitParId(id);
-        if (existing == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Produit non trouvé");
-        }
-        existing.setNom(produitRequest.getNom());
-        existing.setCategorie(produitRequest.getCategorie());
-        existing.setPrixUnitaire(produitRequest.getPrixUnitaire());
-        existing.setQuantiteStock(produitRequest.getQuantiteStock());
-        existing.setSeuilReapprovisionnement(produitRequest.getSeuilReapprovisionnement());
-        Produit updated = produitService.sauvegarderProduit(existing);
+            @RequestParam String nom,
+            @RequestParam String categorie,
+            @RequestParam double prixUnitaire,
+            @RequestParam int quantiteStock,
+            @RequestParam int seuilReapprovisionnement,
+            @RequestParam(name = "imageFile", required = false) MultipartFile imageFile
+    ) {
+        Produit updated = produitService.updateProduitAvecImage(
+                id, nom, categorie, prixUnitaire,
+                quantiteStock, seuilReapprovisionnement, imageFile
+        );
         return ResponseEntity.ok(updated);
     }
 
-    // 5. Supprimer un produit
+    // Supprimer un produit par ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduit(@PathVariable Long id) {
-        Produit existing = produitService.getProduitParId(id);
-        if (existing == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Produit non trouvé");
-        }
+    public ResponseEntity<Void> supprimerProduit(@PathVariable Long id) {
         produitService.supprimerProduit(id);
         return ResponseEntity.noContent().build();
     }
