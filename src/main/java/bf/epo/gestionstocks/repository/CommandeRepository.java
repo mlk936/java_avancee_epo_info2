@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface CommandeRepository extends JpaRepository<Commande, Long> {
-    // Récupérer toutes les commandes par date
+
     List<Commande> findByDateCommande(LocalDate dateCommande);
 }
 

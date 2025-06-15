@@ -21,21 +21,18 @@ public class CommandeController {
         this.commandeService = commandeService;
     }
 
-    // 1. Créer une nouvelle commande (avec ses lignes)
     @PostMapping
     public ResponseEntity<Commande> createCommande(@Valid @RequestBody CommandeRequest request) {
         Commande created = commandeService.creerCommande(request);
         return ResponseEntity.ok(created);
     }
 
-    // 2. Générer une facture pour une commande existante
     @GetMapping("/{id}/facture")
     public ResponseEntity<String> getFacture(@PathVariable Long id) {
         String facture = commandeService.genererFacture(id);
         return ResponseEntity.ok(facture);
     }
 
-    // 3. Lister les commandes pour une date donnée (paramètre optionnel, par défaut aujourd'hui)
     @GetMapping
     public ResponseEntity<List<Commande>> getCommandesByDate(
             @RequestParam(name = "date", required = false)
@@ -48,7 +45,6 @@ public class CommandeController {
         return ResponseEntity.ok(commandes);
     }
 
-    // 4. Rapport du jour (nombre commandes, CA, top 5 produits)
     @GetMapping("/rapport")
     public ResponseEntity<Map<String, Object>> getRapportDuJour(
             @RequestParam(name = "date", required = false)

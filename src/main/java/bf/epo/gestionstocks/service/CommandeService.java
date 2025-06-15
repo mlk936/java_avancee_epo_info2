@@ -109,16 +109,13 @@ public class CommandeService {
         return sb.toString();
     }
 
-    /**
-     * Récupère la liste des commandes pour une date donnée.
-     */
+
+
     public List<Commande> getCommandesParDate(LocalDate date) {
         return commandeRepository.findByDateCommande(date);
     }
 
-    /**
-     * Génère un rapport du jour : nombre de commandes, chiffre d'affaires, top 5 produits vendus.
-     */
+
     public Map<String, Object> genererRapportDuJour(LocalDate date) {
         List<Commande> commandesDuJour = commandeRepository.findByDateCommande(date);
         int nombreCommandes = commandesDuJour.size();

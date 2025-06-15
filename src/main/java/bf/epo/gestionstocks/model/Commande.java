@@ -35,10 +35,10 @@ public class Commande {
     private LocalDate dateCommande;
 
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference  // <-- évite boucle infinie JSON
+    @JsonManagedReference
     private List<LigneCommande> lignes = new ArrayList<>();
 
-    // Constructeurs
+
     public Commande() { }
 
     public Commande(String nomClient, LocalDate dateCommande) {
@@ -46,7 +46,6 @@ public class Commande {
         this.dateCommande = dateCommande;
     }
 
-    // Getters / Setters
 
     public Long getId() {
         return id;

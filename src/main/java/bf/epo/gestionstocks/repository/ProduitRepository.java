@@ -2,6 +2,8 @@ package bf.epo.gestionstocks.repository;
 
 import bf.epo.gestionstocks.model.Produit;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,13 +20,15 @@ public interface ProduitRepository extends JpaRepository<Produit, Long> {
     // Top 4 produits les plus récemment ajoutés (suppose champ 'dateAjout' dans Produit)
     List<Produit> findTop4ByOrderByDateAjoutDesc();
 
-    // Recherche les produits par nom contenant une chaîne (insensible à la casse)
-    List<Produit> findByNomContainingIgnoreCase(String nom);
 
-    // Recherche les produits par catégorie exacte
+    @Query("SELECT p FROM Produit p WHERE LOWER(p.nom) LIKE LOWER(CONCAT('%', :motCle, '%')) OR LOWER(p.categorie) LIKE LOWER(CONCAT('%', :motCle, '%'))")
+    List<Produit> rechercherMultiChamps(@Param("motCle") String motCle);
+
+
+    // Recherche  catégorie
     List<Produit> findByCategorie(String categorie);
 
-    // Liste les produits avec stock exactement égal à 0 (rupture de stock)
+    // Liste ruptur stock
     List<Produit> findByQuantiteStockEquals(Integer quantite);
 
 

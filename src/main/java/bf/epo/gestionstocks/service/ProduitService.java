@@ -23,39 +23,39 @@ public class ProduitService {
         this.produitRepository = produitRepository;
     }
 
-    // Lister tous les produits
+
     public List<Produit> listerProduits() {
         return produitRepository.findAll();
     }
 
-    // Produits vedettes (top 4 ventes)
+    // Pr vedettes 4
     public List<Produit> getProduitsVedettes() {
         return produitRepository.findTop4ByOrderByVentesDesc();
     }
 
-    // Nouveaux produits (top 4 date ajout)
+    // Nouv  4 date aj
     public List<Produit> getNouveauxProduits() {
         return produitRepository.findTop4ByOrderByDateAjoutDesc();
     }
 
-    // Ajouter ou modifier un produit
+
     public Produit sauvegarderProduit(Produit produit) {
         return produitRepository.save(produit);
     }
 
-    // Récupérer un produit par ID
+
     public Produit getProduitParId(Long id) {
         return produitRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit introuvable avec l'ID : " + id));
     }
 
-    // Supprimer un produit par ID
+
     public void supprimerProduit(Long id) {
         Produit produit = getProduitParId(id);
         produitRepository.delete(produit);
     }
 
-    // Lister les produits à réapprovisionner
+
     public List<Produit> listerProduitsARacheter(Integer seuil) {
         return produitRepository.findByQuantiteStockLessThanEqual(seuil);
     }
@@ -64,7 +64,7 @@ public class ProduitService {
         return listerProduitsARacheter(10);
     }
 
-    // Produits en stock critique
+
     public List<Produit> getProduitsStockCritique() {
         return produitRepository.findAll()
                 .stream()
@@ -72,7 +72,7 @@ public class ProduitService {
                 .collect(Collectors.toList());
     }
 
-    // Enregistrer une image et retourner l'URL
+
     public String enregistrerImage(MultipartFile image) {
         try {
             String dossier = "uploads/";
@@ -86,7 +86,12 @@ public class ProduitService {
         }
     }
 
-    // Mise à jour avec image
+    public List<Produit> rechercherParMotCle(String motCle) {
+        return produitRepository.rechercherMultiChamps(motCle);
+    }
+
+
+    // c image
     public Produit updateProduitAvecImage(Long id, String nom, String categorie, double prixUnitaire,
                                           int quantiteStock, int seuilReapprovisionnement, MultipartFile image) {
         Produit existing = getProduitParId(id);

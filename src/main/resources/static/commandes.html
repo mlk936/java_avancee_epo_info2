@@ -22,10 +22,12 @@
                 <div class="mb-3">
                     <label for="nomClient" class="form-label">Nom du client</label>
                     <input type="text" class="form-control" id="nomClient" name="nomClient" required />
+                    <div class="invalid-feedback">Veuillez saisir le nom du client.</div>
                 </div>
                 <div class="mb-3">
                     <label for="dateCommande" class="form-label">Date de commande</label>
                     <input type="date" class="form-control" id="dateCommande" name="dateCommande" required />
+                    <div class="invalid-feedback">Veuillez sélectionner une date de commande.</div>
                 </div>
                 <div id="lignesContainer" class="mb-3">
                     <label class="form-label">Lignes de commande</label>
@@ -83,22 +85,51 @@
     document.getElementById("rapportDate").value = today;
     document.getElementById("dateCommande").value = today;
 
+    // Ajoute une ligne par défaut au chargement
+    ajouterLigne();
+
+    // Gestion validation et soumission formulaire
     document.getElementById("commandeForm").addEventListener("submit", async function (e) {
         e.preventDefault();
-        const nomClient = document.getElementById("nomClient").value.trim();
-        const dateCommande = document.getElementById("dateCommande").value;
+        const form = this;
+
+        // Validation HTML5 native + custom validation pour lignes
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        // Validation des lignes : au moins une et toutes valides
         const lignes = [];
-
-        document.querySelectorAll(".ligneCommande").forEach(div => {
-            const produitId = div.querySelector(".produitId").value;
-            const quantite = div.querySelector(".quantite").value;
-            lignes.push({ produitId: parseInt(produitId), quantite: parseInt(quantite) });
-        });
-
-        if (lignes.length === 0) {
+        const lignesDivs = document.querySelectorAll(".ligneCommande");
+        if (lignesDivs.length === 0) {
             alert("Veuillez ajouter au moins une ligne de commande.");
             return;
         }
+
+        for (const div of lignesDivs) {
+            const produitInput = div.querySelector(".produitId");
+            const quantiteInput = div.querySelector(".quantite");
+
+            if (!produitInput.value || parseInt(produitInput.value) < 1) {
+                produitInput.classList.add('is-invalid');
+                alert("Veuillez saisir un ID produit valide (>=1).");
+                return;
+            } else {
+                produitInput.classList.remove('is-invalid');
+            }
+            if (!quantiteInput.value || parseInt(quantiteInput.value) < 1) {
+                quantiteInput.classList.add('is-invalid');
+                alert("Veuillez saisir une quantité valide (>=1).");
+                return;
+            } else {
+                quantiteInput.classList.remove('is-invalid');
+            }
+            lignes.push({ produitId: parseInt(produitInput.value), quantite: parseInt(quantiteInput.value) });
+        }
+
+        const nomClient = document.getElementById("nomClient").value.trim();
+        const dateCommande = document.getElementById("dateCommande").value;
 
         const payload = { nomClient, dateCommande, lignes };
 
@@ -111,9 +142,11 @@
 
             if (response.ok) {
                 alert("✅ Commande créée avec succès !");
-                this.reset();
+                form.reset();
                 document.getElementById("lignesContainer").innerHTML = "";
                 document.getElementById("dateCommande").value = today;
+                ajouterLigne();
+                form.classList.remove('was-validated');
             } else {
                 const errorText = await response.text();
                 alert("❌ Erreur lors de la création : " + errorText);
@@ -129,7 +162,9 @@
         ligne.className = "ligneCommande d-flex gap-2 mb-2";
         ligne.innerHTML = `
             <input type="number" class="form-control produitId" placeholder="ID Produit" min="1" required />
+            <div class="invalid-feedback">Veuillez saisir un ID produit valide.</div>
             <input type="number" class="form-control quantite" placeholder="Quantité" min="1" required />
+            <div class="invalid-feedback">Veuillez saisir une quantité valide.</div>
             <button type="button" class="btn btn-danger" onclick="this.parentNode.remove()">🗑 Supprimer</button>
         `;
         container.appendChild(ligne);
@@ -158,14 +193,14 @@
 
             commandes.forEach(c => {
                 const item = document.createElement("li");
-                item.className = "list-group-item d-flex justify-content-between align-items-center";
+                item.className = "list-group-item d-flex justify-content-between align-items-center flex-wrap";
                 const texteInfo = document.createElement("div");
                 texteInfo.innerHTML = `
                     <strong>${c.nomClient}</strong> — <small>${c.dateCommande}</small>
                     <span class="badge bg-secondary ms-2">${c.lignes.length} ligne(s)</span>
                 `;
                 const btnFacture = document.createElement("button");
-                btnFacture.className = "btn btn-sm btn-outline-secondary";
+                btnFacture.className = "btn btn-sm btn-outline-secondary mt-2 mt-md-0";
                 btnFacture.textContent = "🧾 Facture";
                 btnFacture.onclick = () => afficherFacture(c.id);
                 item.appendChild(texteInfo);
@@ -194,53 +229,48 @@
         }
     }
 
-async function chargerRapport() {
-  const selectedDate = document.getElementById("rapportDate").value;
-  if (!selectedDate) {
-    alert("Veuillez sélectionner une date.");
-    return;
-  }
+    async function chargerRapport() {
+        const selectedDate = document.getElementById("rapportDate").value;
+        if (!selectedDate) {
+            alert("Veuillez sélectionner une date.");
+            return;
+        }
 
-  try {
-    const response = await fetch(`/api/commandes/rapport?date=${selectedDate}`);
-    if (!response.ok) {
-      const msg = await response.text();
-      alert("Erreur lors de la récupération du rapport : " + msg);
-      return;
+        try {
+            const response = await fetch(`/api/commandes/rapport?date=${selectedDate}`);
+            if (!response.ok) {
+                const msg = await response.text();
+                alert("Erreur lors de la récupération du rapport : " + msg);
+                return;
+            }
+
+            const data = await response.json();
+            const { nombreCommandes, chiffreAffaires, topProduits } = data;
+
+            let htmlRapport = `
+              <ul>
+                <li>Nombre de commandes : ${nombreCommandes}</li>
+                <li>Chiffre d'affaires : ${chiffreAffaires} FCFA</li>
+              </ul>
+              <h3>Top 5 des produits</h3>
+              <ol>
+            `;
+
+            topProduits.forEach(p => {
+                const nom = p.nom || p.name || p.produit || JSON.stringify(p);
+                const quantite = p.quantite || p.quantity || 0;
+                htmlRapport += `<li>${nom} - ${quantite} ex</li>`;
+            });
+
+            htmlRapport += `</ol>`;
+
+            document.getElementById('rapportResultat').innerHTML = htmlRapport;
+
+        } catch (err) {
+            alert("Erreur chargement rapport : " + err.message);
+        }
     }
-
-    const data = await response.json();
-    const { nombreCommandes, chiffreAffaires, topProduits } = data;
-
-    let htmlRapport = `
-      <ul>
-        <li>Nombre de commandes : ${nombreCommandes}</li>
-        <li>Chiffre d'affaires : ${chiffreAffaires} FCFA</li>
-      </ul>
-      <h3>Top 5 des produits</h3>
-      <ol>
-    `;
-
-    topProduits.forEach(p => {
-      const nom = p.nom || p.name || p.produit || JSON.stringify(p);
-      const quantite = p.quantite || p.quantity || 0;
-      htmlRapport += `<li>${nom} - ${quantite} ex</li>`;
-    });
-
-    htmlRapport += `</ol>`;
-
-    document.getElementById('rapportResultat').innerHTML = htmlRapport;
-
-  } catch (err) {
-    alert("Erreur chargement rapport : " + err.message);
-  }
-}
-
-
-
-
-
 </script>
-
 </body>
+
 </html>

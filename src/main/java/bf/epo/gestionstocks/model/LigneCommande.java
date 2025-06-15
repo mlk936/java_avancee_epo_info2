@@ -14,14 +14,14 @@ public class LigneCommande {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Association ManyToOne vers Commande
+
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id", nullable = false)
     @JsonBackReference  // <-- Gère la sérialisation côté "enfant"
     private Commande commande;
 
-    // Association ManyToOne vers Produit
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "produit_id", nullable = false)
     private Produit produit;
@@ -36,7 +36,7 @@ public class LigneCommande {
     @Column(name = "prix_unitaire", nullable = false)
     private Double prixUnitaire;
 
-    // Constructeurs
+
     public LigneCommande() { }
 
     public LigneCommande(Produit produit, Integer quantite, Double prixUnitaire) {
@@ -45,7 +45,7 @@ public class LigneCommande {
         this.prixUnitaire = prixUnitaire;
     }
 
-    // Getters / Setters
+
 
     public Long getId() {
         return id;

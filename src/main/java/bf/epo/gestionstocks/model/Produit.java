@@ -48,7 +48,7 @@ public class Produit {
     @Column(name = "image_url")
     private String imageUrl = "/images/produits/default.png";
 
-    // Constructeurs
+    // Construct
     public Produit() {
     }
 
@@ -69,7 +69,7 @@ public class Produit {
         this.imageUrl = imageUrl;
     }
 
-    // Getters & Setters
+
 
     public Long getId() {
         return id;

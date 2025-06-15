@@ -11,7 +11,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Le chemin absolu vers le dossier uploads
         String uploadPath = Paths.get("uploads").toAbsolutePath().toUri().toString();
 
         registry.addResourceHandler("/images/**")

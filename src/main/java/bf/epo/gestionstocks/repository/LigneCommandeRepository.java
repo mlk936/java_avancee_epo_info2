@@ -9,6 +9,5 @@ import java.util.List;
 
 @Repository
 public interface LigneCommandeRepository extends JpaRepository<LigneCommande, Long> {
-    // Lister toutes les lignes d'une commande donnée
     List<LigneCommande> findByCommandeId(Long commandeId);
 }

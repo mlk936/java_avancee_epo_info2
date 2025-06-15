@@ -18,20 +18,23 @@ public class ProduitController {
         this.produitService = produitService;
     }
 
-    // Lister tous les produits
     @GetMapping
     public List<Produit> getAllProduits() {
         return produitService.listerProduits();
     }
 
-    // Obtenir un produit par ID
+    @GetMapping("/recherche")
+    public List<Produit> rechercherProduits(@RequestParam("motCle") String motCle) {
+        return produitService.rechercherParMotCle(motCle);
+    }
+
+
     @GetMapping("/{id}")
     public ResponseEntity<Produit> getProduitById(@PathVariable Long id) {
         Produit produit = produitService.getProduitParId(id);
         return ResponseEntity.ok(produit);
     }
 
-    // Ajouter un nouveau produit avec image optionnelle
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<Produit> creerProduit(
             @RequestParam String nom,
@@ -60,7 +63,6 @@ public class ProduitController {
     }
 
 
-    // Modifier un produit existant avec image optionnelle
     @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
     public ResponseEntity<Produit> updateProduitAvecImage(
             @PathVariable Long id,
@@ -78,10 +80,19 @@ public class ProduitController {
         return ResponseEntity.ok(updated);
     }
 
-    // Supprimer un produit par ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> supprimerProduit(@PathVariable Long id) {
         produitService.supprimerProduit(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/vedettes")
+    public List<Produit> getProduitsVedettes() {
+        return produitService.getProduitsVedettes();
+    }
+
+    @GetMapping("/nouveaux")
+    public List<Produit> getNouveauxProduits() {
+        return produitService.getNouveauxProduits();
     }
 }

@@ -23,6 +23,8 @@ public class AccueilController {
         model.addAttribute("produitsVedettes", produitsVedettes);
         model.addAttribute("nouveautes", nouveautes);
 
-        return "accueil"; // accueil.html (Thymeleaf) dans templates/
+        return "accueil";
     }
+
+
 }
